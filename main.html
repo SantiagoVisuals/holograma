@@ -5,6 +5,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
   </head>
+  <style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Evita los deslizadores */
+    width: 100%;
+    height: 100%;
+  }
+
+  canvas {
+    display: block; /* Asegura que no haya márgenes extras en el canvas */
+  }
+</style>
+
   <body>
     <script type="importmap">
       {
@@ -59,7 +73,8 @@
   // Aplicamos el efecto PeppersGhostEffect y configuramos tamaño y distancia de la cámara
   effect = new PeppersGhostEffect(renderer);
   effect.setSize(window.innerWidth, window.innerHeight);
-  effect.cameraDistance = 10;
+  effect.cameraDistance = 1;
+  effect.separation = 25; // Reduce el espacio entre las vistas
 
   // Actualizamos la ventana en caso de que se redimensione
   window.addEventListener('resize', onWindowResize);
@@ -67,11 +82,11 @@
   // Cargar el modelo FBX
   let loader = new FBXLoader();
   loader.load('Dancing Twerk 74.fbx', function (object) {
-    object.scale.set(0.02, 0.02, 0.02); // Reducir el tamaño del objeto
-    object.position.set(0, 0, 0);
+    object.scale.set(0.003, 0.003, 0.003); // Reducir el tamaño del objeto
+    object.position.set(0, -0.3, 0);
     scene.add(object);
 
-    // Si el archivo FBX tiene animaciones
+    // Si el archivo FBX tiene animaciones 
     mixer = new THREE.AnimationMixer(object);
     object.traverse(function (child) {
       if (child.isMesh) {
