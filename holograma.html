@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Simulación 3D</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+  </head>
+  <body>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://threejs.org/build/three.module.js",
+          "three/addons/": "https://threejs.org/examples/jsm/"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as THREE from 'three';
+      import { PeppersGhostEffect } from 'three/addons/effects/PeppersGhostEffect.js';
+      import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+
+      let container;
+      let camera, scene, renderer, effect;
+      let group, mixer;
+
+      init();
+
+      function init() {
+  // Crear contenedor y cámara
+  container = document.createElement('div');
+  document.body.appendChild(container);
+
+  camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 100000);
+  scene = new THREE.Scene();
+
+  // Grupo de objetos
+  group = new THREE.Group();
+ // scene.add(group);
+
+  // Geometría de cubos
+  const geometry = new THREE.BoxGeometry(1, 1, 1);
+  const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+
+  for (let i = 0; i < 5; i++) {
+    const cube = new THREE.Mesh(geometry, material);
+    cube.position.set(Math.random() * 4 - 2, Math.random() * 4 - 2, Math.random() * 4 - 2);
+    group.add(cube);
+  }
+
+  // Crear luces
+  createLighting();
+
+  // Configuramos el renderizador
+  renderer = new THREE.WebGLRenderer();
+  renderer.setPixelRatio(window.devicePixelRatio);
+  container.appendChild(renderer.domElement);
+
+  // Aplicamos el efecto PeppersGhostEffect y configuramos tamaño y distancia de la cámara
+  effect = new PeppersGhostEffect(renderer);
+  effect.setSize(window.innerWidth, window.innerHeight);
+  effect.cameraDistance = 10;
+
+  // Actualizamos la ventana en caso de que se redimensione
+  window.addEventListener('resize', onWindowResize);
+
+  // Cargar el modelo FBX
+  let loader = new FBXLoader();
+  loader.load('Dancing Twerk 74.fbx', function (object) {
+    object.scale.set(0.02, 0.02, 0.02); // Reducir el tamaño del objeto
+    object.position.set(0, 0, 0);
+    scene.add(object);
+
+    // Si el archivo FBX tiene animaciones
+    mixer = new THREE.AnimationMixer(object);
+    object.traverse(function (child) {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+
+    // Reproducir las animaciones
+    object.animations.forEach((clip) => {
+      mixer.clipAction(clip).play();
+    });
+
+    animate(); // Iniciar la animación después de cargar el modelo
+  });
+}
+
+function createLighting() {
+  // Luz ambiental para iluminación general
+  const ambientLight = new THREE.AmbientLight(0x404040, 5); // Luz suave y difusa
+  scene.add(ambientLight);
+
+  // Luz direccional que apunta hacia el objeto
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 5);
+  directionalLight.position.set(10, 10, 10); // Ajusta la posición para que apunte al objeto
+  directionalLight.target = group; // Establece el objetivo de la luz hacia el grupo de objetos
+  scene.add(directionalLight);
+
+  // Crear una luz de relleno para suavizar sombras
+  const fillLight = new THREE.DirectionalLight(0xffffff, 5);
+  fillLight.position.set(-10, -10, -10); // Coloca la luz en la dirección opuesta para suavizar sombras
+  scene.add(fillLight);
+
+  // Agregar sombras
+  directionalLight.castShadow = true;
+  fillLight.castShadow = true;
+  //scene.background = new THREE.Color(0xeeeeee); // Color de fondo de la escena
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+
+  effect.setSize(window.innerWidth, window.innerHeight);
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  if (mixer) mixer.update(0.007); // Actualiza las animaciones
+
+  // Si el objeto FBX ha sido cargado, se le aplica rotación
+  if (scene.children.length > 0) {
+    // Asumiendo que el modelo FBX es el primer hijo de la escena
+    const object = scene.children[scene.children.length - 1];
+
+    // Rotación del modelo FBX
+    object.rotation.y += 0.01;  // Rotación alrededor del eje Y (puedes cambiar a X o Z si deseas)
+  }
+
+  effect.render(scene, camera);
+}
+
+
+    </script>
+  </body>
+</html>
